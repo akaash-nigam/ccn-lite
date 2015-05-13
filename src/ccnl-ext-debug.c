@@ -54,7 +54,7 @@
 char*
 eth2ascii(unsigned char *eth)
 {
-    static char buf[30];
+    static char buf[18];
 
 #ifdef CCNL_ARDUINO
     sprintf_P(buf, PSTR("%02x:%02x:%02x:%02x:%02x:%02x"),

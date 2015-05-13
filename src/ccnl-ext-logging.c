@@ -68,18 +68,20 @@ ccnl_debugLevelToChar(int level)
 
 #ifdef CCNL_ARDUINO
 
-#define _TRACE(F,P) do { \
-     if (debug_level >= TRACE) {                     \
-          Serial.print("[");            \
+#define _TRACE(F,P) do {                    \
+    if (debug_level >= TRACE) { char *cp;   \
+          Serial.print("[");                \
           Serial.print(P); \
-          Serial.print("] ");           \
-          Serial.print(timestamp());    \
-          Serial.print(": ");            \
-          strcpy_P(logstr, PSTR(__FILE__) + 8);     \
-          Serial.print(logstr);            \
-          Serial.print(":");            \
-          Serial.print(__LINE__);            \
-          Serial.println("\r");           \
+          Serial.print("] ");               \
+          Serial.print(timestamp());        \
+          Serial.print(": ");               \
+          strcpy_P(logstr, PSTR(__FILE__)); \
+          cp = logstr + strlen(logstr);     \
+          while (cp >= logstr && *cp != '/') cp--; \
+          Serial.print(cp+1);               \
+          Serial.print(":");                \
+          Serial.print(__LINE__);           \
+          Serial.println("\r");             \
      }} while(0)
 
 #else
@@ -179,14 +181,15 @@ debug_memdump()
     CONSOLE("%s @@@ memory dump starts\n", timestamp());
     for (h = mem; h; h = h->next) {
 #ifdef CCNL_ARDUINO
-        char *cp = logstr;
-        sprintf_P(logstr, PSTR("%s @@@ mem %p %5d Bytes, allocated by "),
-                  timestamp(),
-                  (int)((unsigned char *)h + sizeof(struct mhdr)),
-                  h->size);
-        cp += strlen(logstr);
-        strcpy_P(cp, h->fname + 7); // remove the "src/../" prefix
-        Serial.print(logstr);
+        char *cp;
+        CONSOLE("%s @@@ mem %p %5d Bytes, allocated by ",
+                timestamp(), (int)((unsigned char *)h + sizeof(struct mhdr)),
+                h->size);
+        strcpy_P(logstr, h->fname);
+        cp = logstr + strlen(logstr);
+        while (cp >= logstr && *cp != '/')
+            cp--;
+        Serial.print(cp+1);
         CONSOLE(":%d @%d.%03d\n", h->lineno,
                 int(h->tstamp), int(1000*(h->tstamp - int(h->tstamp))));
 #else
